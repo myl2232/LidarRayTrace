@@ -1,0 +1,12 @@
+build/
+cmake-build-*/
+*.ply
+*.user
+Binaries/
+Intermediate/
+Saved/
+.vs/
+.idea/
+.vscode/
+__pycache__/
+*.pyc

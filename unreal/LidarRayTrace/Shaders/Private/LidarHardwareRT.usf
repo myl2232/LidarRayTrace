@@ -1,0 +1,75 @@
+// Livox / Mid-360 hardware ray-gen. Dispatch is 1D: one thread per CSV sample.
+// Map this file as /Plugin/LidarRayTrace/Private/LidarHardwareRT.usf
+// See docs/UE5_HARDWARE_RT.md for the RDG / TLAS bind sequence.
+
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/RayTracing/RayTracingCommon.ush"
+
+struct FLidarGpuRay
+{
+	float3 Origin;
+	float TMin;
+	float3 Direction;
+	float TMax;
+};
+
+struct FLidarGpuHit
+{
+	float T;
+	float Hit;
+	float3 Normal;
+	float Pad;
+};
+
+RaytracingAccelerationStructure TLAS;
+StructuredBuffer<FLidarGpuRay> InRays;
+RWStructuredBuffer<FLidarGpuHit> OutHits;
+
+struct FLidarPayload
+{
+	float T;
+	float Hit;
+	float3 Normal;
+};
+
+[shader("raygeneration")]
+void LidarRGS()
+{
+	const uint Index = DispatchRaysIndex().x;
+	const FLidarGpuRay R = InRays[Index];
+
+	RayDesc Ray;
+	Ray.Origin = R.Origin;
+	Ray.Direction = R.Direction;
+	Ray.TMin = R.TMin;
+	Ray.TMax = R.TMax;
+
+	FLidarPayload Payload;
+	Payload.T = R.TMax;
+	Payload.Hit = 0.0;
+	Payload.Normal = float3(0, 0, 1);
+
+	TraceRay(TLAS, RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,
+	         0xFF, 0, 1, 0, Ray, Payload);
+
+	FLidarGpuHit H;
+	H.T = Payload.T;
+	H.Hit = Payload.Hit;
+	H.Normal = Payload.Normal;
+	H.Pad = 0.0;
+	OutHits[Index] = H;
+}
+
+[shader("closesthit")]
+void LidarCHS(inout FLidarPayload Payload, in BuiltInTriangleIntersectionAttributes Attr)
+{
+	Payload.Hit = 1.0;
+	Payload.T = RayTCurrent();
+	Payload.Normal = float3(0, 0, 1);
+}
+
+[shader("miss")]
+void LidarMS(inout FLidarPayload Payload)
+{
+	Payload.Hit = 0.0;
+}

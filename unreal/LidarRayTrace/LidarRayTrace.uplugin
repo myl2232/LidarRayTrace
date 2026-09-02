@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "LidarRayTrace",
+	"Description": "Livox-style LiDAR simulation for Unreal Engine 5. Standalone scan core plus Chaos async and hardware RT backends.",
+	"Category": "Sensors",
+	"CreatedBy": "LidarRayTrace",
+	"EnabledByDefault": true,
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"Modules": [
+		{
+			"Name": "LidarRayTrace",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
